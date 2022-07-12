@@ -1,5 +1,5 @@
 import json
-import os
+import sys
 import time
 import multiprocessing
 from multiprocessing import Pool
@@ -77,35 +77,3 @@ if __name__ == '__main__':
     p.join()
 
     sys.exit()
-
-
-    # df = pd.concat(entire_dataset)
-
-
-    # entire_dataset = []
-    #
-    # for x in file_dir_list:
-    #     entire_dataset.append(pd.read_csv(x))
-    #
-    # df = pd.concat(entire_dataset)
-    # df.to_csv('entire_dataset.csv', encoding="utf-8")
-    #
-    # tables = {
-    #     'user_id_name': df[['id', 'p_id', 'num_follower']],
-    #     'track_id_name': df[['track', 'track_id', 'duration']],
-    #     'artist_id_name': df[['artist_id', 'artist']],
-    #     'album_id_name': df[['album_id', 'album']] }
-    #
-    # for x in tables:
-    #     tables[x] = tables[x].drop_duplicates()
-    #     tables[x].to_csv('{}.csv'.format(x))
-    #
-    # del tables
-    #
-    # df[['p_id', 'track_id', 'artist_id', 'album_id']].to_csv('id_dataset.csv', encoding="utf-8")
-    #
-    # end_time = time.time()
-    #
-    # print('data restructure is complete!')
-    # print('total expend time : {} seconds'.format(round(end_time-start_time),2))
-    # exit()
