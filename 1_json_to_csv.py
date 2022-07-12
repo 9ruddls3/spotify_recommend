@@ -76,6 +76,8 @@ if __name__ == '__main__':
     p.close()
     p.join()
 
+    sys.exit()
+
 
     # df = pd.concat(entire_dataset)
 
