@@ -1,11 +1,11 @@
-import json
+import os
 import sys
+import json
 import time
 import multiprocessing
-from multiprocessing import Pool
 import pandas as pd
-import os
 
+from multiprocessing import Pool
 
 def json_parsing(file_dir):
     restructed_dict = {
@@ -46,8 +46,8 @@ def createDirectory(directory):
     try:
         if not os.path.exists(directory):
             os.makedirs(directory)
-    except OSError\
-            : print("Error: Failed to create the directory.")
+    except OSError:
+        print("Error: Failed to create the directory.")
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -69,8 +69,8 @@ if __name__ == '__main__':
 
     for x in range(num_threads-1):
         thread_list.append(file_dir_list[x*unit_size:(x+1)*unit_size])
-
     thread_list.append(file_dir_list[(num_threads-1)*unit_size:])
+
     p = Pool(num_threads)
     output = p.map(data_restructure,thread_list)
     p.close()
