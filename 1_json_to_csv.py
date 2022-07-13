@@ -7,6 +7,53 @@ import pandas as pd
 
 from multiprocessing import Pool
 
+
+def create_directory(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print("Error: Failed to create the directory.")
+
+
+def get_num_cpus():
+    maximum_cpus = int(multiprocessing.cpu_count())
+
+    cpus = int(input("Set the number of Cpus (Maximum number of this devise : {} ) ".format(maximum_cpus)))
+    while cpus > maximum_cpus:
+        cpus = int(input("Set the number of Cpus (Maximum number of this devise : {} ) ".format(maximum_cpus)))
+
+    return cpus
+
+
+def multi_processing_setting(datafile_dir, num_cpu, maximum_cpus):
+    file_dir_list = os.listdir(datafile_dir)
+    file_dir_list = list(map(lambda x: '{}/{}'.format(datafile_dir, x), file_dir_list))
+
+    maximum_cpus = int(multiprocessing.cpu_count())
+    num_cpu = int(input("Set the number of Cpus (Maximum number of this devise : {} ) ".format(maximum)))
+
+    while num_cpu > maximum_cpus:
+        num_cpu = int(input("Set the number of Cpus (Maximum number of this devise : {} ) ".format(maximum)))
+
+    if num_cpu == 1:
+        unit_size = len(file_dir_list)
+    else:
+        unit_size = int(len(file_dir_list) // (num_cpu))
+
+    multiprocess_list = []
+
+    for x in range(num_cpu):
+        start = x*unit_size
+        end = (x+1)*unit_size
+        if x == num_cpu-1:
+            multiprocess_list.append(file_dir_list[start:])
+        else:
+            multiprocess_list.append(file_dir_list[start:end])
+
+    return multiprocess_list
+
+
 def json_parsing(file_dir):
     restructed_dict = {
         'id': [],
@@ -36,18 +83,13 @@ def json_parsing(file_dir):
                 restructed_dict['album_id'].append(track_info['album_uri'].split(':')[2])
     return pd.DataFrame(restructed_dict)
 
+
 def data_restructure(file_dir_list):
     for x in file_dir_list:
         csv_id = x.split('.')[2]
         json_parsing(x).to_csv('spotify_csv/{}.csv'.format(csv_id))
     return
 
-def createDirectory(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print("Error: Failed to create the directory.")
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -55,25 +97,21 @@ if __name__ == '__main__':
     file_dir_list = os.listdir(datafile_dir)
     file_dir_list = list(map(lambda x: datafile_dir+'/'+x,file_dir_list))
 
-    createDirectory('spotify_csv')
+    create_directory('spotify_csv')
 
-    maximum = int(multiprocessing.cpu_count())
+    file_dir_list = os.listdir(datafile_dir)
+    file_dir_list = list(map(lambda x: '{}/{}'.format(datafile_dir, x), file_dir_list))
 
-    num_threads = int(input("Set the number of thrads (Maximum number of this devise : {} ) ".format(maximum)))
+    num_cpus = get_num_cpus()
 
-    while num_threads > maximum:
-        num_threads = int(input("Set the number of thrads (Maximum number of this devise : {} ) ".format(maximum)))
+    input_data = multi_processing_setting(datafile_dir, num_cpus)
 
-    thread_list = []
-    unit_size = int(len(file_dir_list)//num_threads)
-
-    for x in range(num_threads-1):
-        thread_list.append(file_dir_list[x*unit_size:(x+1)*unit_size])
-    thread_list.append(file_dir_list[(num_threads-1)*unit_size:])
-
-    p = Pool(num_threads)
-    output = p.map(data_restructure,thread_list)
+    p = Pool(num_cpus)
+    output = p.map(data_restructure, input_data)
     p.close()
     p.join()
+
+    end_time = time.time()
+    print('Spending Time is {} Minute '.format(round((end_time - start_time) / 60, 2)))
 
     sys.exit()
