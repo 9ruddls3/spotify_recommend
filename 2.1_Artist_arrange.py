@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import multiprocessing
+import parmap
 import pandas as pd
 
 from multiprocessing import Pool
@@ -45,39 +46,42 @@ def multi_processing_setting(file_dir_list, num_cpu):
 
 
 def arrange_artist(dir_list):
-    df_list = []
+    return_freq_series = pd.Series()
+    return_non_duplicate_series = pd.Series()
     for x in dir_list:
-        df_list.append(pd.read_csv(x, index_col=0))
+        temp_df = pd.read_csv(x, index_col=0)
 
-    df = pd.concat(df_list,axis=1)
-    df = df.drop_duplicates()
-    return df
+        return_freq_series = return_freq_series.add(temp_df['artist'].value_counts())
+        return_non_duplicate_series = return_non_duplicate_series.add(temp_df.drop_duplicates()['artist'].value_counts())
+
+    return return_freq_series, return_non_duplicate_series
 
 
 if __name__ == '__main__':
     start_time = time.time()
 
-    datafile_dir = 'spotify_splited'
+    datafile_dir = 'spotify_splited/artist_id_name'
     file_dir_list = os.listdir(datafile_dir)
-
-    for x in file_dir_list:
-        print(x)
-    sys.exit()
-    # file_dir_list = list(map(lambda x: '{}/{}'.format(datafile_dir, x), file_dir_list))
+    file_dir_list = list(map(lambda x: '{}/{}'.format(datafile_dir, x), file_dir_list))
 
     num_cpus = get_num_cpus()
+    input_data = multi_processing_setting(file_dir_list, num_cpus)
 
-    input_data = multi_processing_setting(datafile_dir, num_cpus)
+    output = parmap.map(arrange_artist, input_data, pm_pbar=True, pm_processes=num_cpus)
 
+    artist_freq_series = pd.Series()
+    artist_non_duplicate_series = pd.Series()
 
-    sys.exit()
-    p = Pool(num_cpus)
-    output = p.map(arrange_artist, input_data)
-    df = pd.concat(output, axis=1)
-    df = df.drop_duplicates()
-    df.to_csv('Artist_id.csv')
-    p.close()
-    p.join()
+    for x in output:
+        artist_freq_series = artist_freq_series.add(x[0])
+        artist_non_duplicate_series = artist_non_duplicate_series.add(x[1])
+
+    df = pd.DataFrame(
+        index=artist_freq_series.index,
+        data={'freq': artist_freq_series, 'non_duplicate': artist_non_duplicate_series}
+    )
+
+    df.to_csv('Artist_freq.csv')
 
     end_time = time.time()
     print('Spending Time is {} Minute '.format(round((end_time - start_time) / 60, 2)))
